@@ -1,6 +1,7 @@
 # coding:utf-8
 
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 
@@ -21,10 +22,15 @@ class MainApp(App):
     # アプリ起動時
     def on_start(self):
         print("App Start!!")
+        Clock.schedule_interval(self.my_callback, 2)
 
     # アプリ終了時
     def on_stop(self):
         print("App End!!")
+
+    def my_callback(self, dt):
+        print(".")
+        pass
 
 if __name__=="__main__":
     MainApp().run()
