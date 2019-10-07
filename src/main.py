@@ -40,7 +40,9 @@ class GameApp(App):
     #     return True
 
     def cycle(self, iter=cycle(list('0123'))):
-        return next(iter)
+        it = next(iter)
+        print(it)
+        return it
 
     def reload(self, anim, ch, progress):
         ch.source = 'atlas://chara/{}{}'.format(ch.drct,self.cycle())
@@ -55,7 +57,7 @@ class GameApp(App):
         self.moving = True
         # キャラクターを移動
         self.anim = Animation(
-            d=1./2., s=1./4., t='linear',
+            d=2./3., s=1./4., t='linear',
             x=self.ch.x+(drct=='E')*192-(drct=='W')*192,
             y=self.ch.y+(drct=='N')*256-(drct=='S')*256)
         self.ch.drct = drct
@@ -70,7 +72,7 @@ class GameApp(App):
         self.moving = False
         self.ch = Character()
         self.ch.pos = (256*2, 192*2)
-        self.ch.drct = 'E'
+        # self.ch.drct = 'S'
         root.game.add_widget(self.ch)
         return root
 
