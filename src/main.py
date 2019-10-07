@@ -1,36 +1,60 @@
 # coding:utf-8
 
 from kivy.app import App
-from kivy.clock import Clock
-from kivy.uix.boxlayout import BoxLayout
+from kivy.animation import Animation
+from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.image import Image
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.relativelayout import RelativeLayout
+from itertools import cycle
 
-# 画面の見た目や機能を構成するクラス
-class MainScreen(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+from kivy.lang import Builder
 
-        btn = Button(text="hello")
-        self.add_widget(btn)
+Builder.load_file('./main.kv')
 
-# アプリを構成するクラス
-class MainApp(App):
+class Root(BoxLayout):pass
+class ControlPad(BoxLayout):pass
+class Game(RelativeLayout):pass
+class Character(Image):pass
+
+class GameApp(App):
+
+    def cycle(self, iter=cycle(list('0123'))):
+        return iter.next()
+
+    def reload(self, anim, ch, progress):
+        ch.source = 'atlas://chara/%s%s' % (ch.drct,self.cycle())
+        ch.reload()
+
+    def clear(self, anim, ch):
+        self.moving = False
+
+    def move(self, drct, *args):
+        if self.moving:
+            return False
+        self.moving = True
+        self.anim = Animation(
+            d=1./1., s=1./8., t='linear',
+            x=self.ch.x+(drct=='E')*192-(drct=='W')*192,
+            y=self.ch.y+(drct=='N')*256-(drct=='S')*256)
+        self.ch.drct = drct
+        self.anim.bind(on_progress=self.reload)
+        self.anim.bind(on_complete=self.clear)
+        self.anim.start(self.ch)
+        return False
+
+    def on_touch_down(self, touch):
+        print(touch)
+
     def build(self):
-        MS = MainScreen()
-        return MS
-    
-    # アプリ起動時
-    def on_start(self):
-        print("App Start!!")
-        Clock.schedule_interval(self.my_callback, 2)
+        root = Root()
+        self.moving = False
+        self.ch = Character()
+        self.ch.pos = (0, 0)
+        self.ch.drct = 'S'
+        root.game.add_widget(self.ch)
+        return root
 
-    # アプリ終了時
-    def on_stop(self):
-        print("App End!!")
-
-    def my_callback(self, dt):
-        print(".")
-        pass
-
-if __name__=="__main__":
-    MainApp().run()
+if __name__ == '__main__':
+    GameApp().run()
