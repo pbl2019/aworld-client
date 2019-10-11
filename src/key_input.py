@@ -24,6 +24,7 @@ class MyKeyboardListener(Widget):
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
         self._keyboard.bind(on_key_up=self._on_keyboard_up)
         self.keycode = ""
+        self.key_status = False
 
     # キーボード入力が終了した時
     def _keyboard_closed(self):
@@ -34,6 +35,7 @@ class MyKeyboardListener(Widget):
     # キーボードを押した時
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         self.keycode = keycode
+        self.key_status = True
         # print('The key', keycode, 'have been pressed')
         # print(' - text is', text)
 
@@ -45,24 +47,24 @@ class MyKeyboardListener(Widget):
 
     # キーボードを離した時
     def _on_keyboard_up(self, keyboard, keycode):
-        self.keycode = ""
+        self.keycode = keycode
+        self.key_status = False
         return True
 
     def my_callback(self, dt):
-        key_status = bool(self.keycode)
-        if key_status:
+        if len(self.keycode) == 2:
             button_name = self.keycode[1]
+            d = {
+                "characterId": "1",
+                "buttonName": button_name,
+                "status": self.key_status,
+                "optional": "",
+            }
+            print(d)
+            s.sendto(json.dumps(d).encode(), (ADDRESS, PORT))
+            self.keycode = ""
         else:
             button_name = self.keycode
-
-        d = {
-            "CharacterId": "1",
-            "ButtonName": button_name,
-            "Status": key_status,
-            "Optional": "",
-        }
-        print(d)
-        s.sendto(json.dumps(d).encode(), (ADDRESS, PORT))
 
 class GameApp(App):
 
@@ -74,7 +76,7 @@ class GameApp(App):
 
     def build(self):
         mykl = MyKeyboardListener()
-        Clock.schedule_interval(mykl.my_callback, 1)
+        Clock.schedule_interval(mykl.my_callback, 0.01)
         return mykl
 
 if __name__ == '__main__':
