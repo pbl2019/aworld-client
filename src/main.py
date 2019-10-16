@@ -56,7 +56,7 @@ class Player(Widget):
 
     def move(self, addpos):
         self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
-        
+        print(addpos[0]/20*0.25, addpos[1]/20*0.25)
 
 class MainScreen(Widget):
     p = ObjectProperty(None)
@@ -116,28 +116,38 @@ class MainScreen(Widget):
     def my_callback(self, dt):
         if len(self.keycode) == 2:
             button_name = self.keycode[1]
-            map_pos_y = (self.p.pos[1]+self.move_pexel)//self.m.msize
+            y = self.p.move_y
+            x = self.p.move_x
 
             # upキーが押された時
             if self.keystatus and button_name == "up":
-                if self.m.map[-int(map_pos_y)-1][int((self.p.move_y+1)//1)] == 0:
+                if self.m.map[-(int(y//1)+2)][int(x//1)] == 0 and self.m.map[-(int(y//1)+2)][int((x+0.75)//1)] == 0:
                     self.p.move_y += 0.25
                     self.p.move((0, self.move_pexel))
 
             # downキーが押された時
             if self.keystatus and button_name == "down":
-                if self.m.map[-int(map_pos_y)-1][int((self.p.move_y-0.25)//1)] == 0:
+                if self.m.map[-int((y+0.75)//1)][int(x//1)] == 0 and self.m.map[-int((y+0.75)//1)][int((x+0.75)//1)] == 0:
                     self.p.move_y -= 0.25
                     self.p.move((0, -self.move_pexel))
-
+            
             # rightキーが押された時
             if self.keystatus and button_name == "right":
-                map_pos_y = (self.p.pos[1]+self.move_pexel)//self.m.msize
-                print(self.m.map[-int(map_pos_y)-1])
-                if self.m.map[-int(map_pos_y)-1][int((self.p.move_y-0.25)//1)] == 0:
+                if self.m.map[-int(y)-1][int(x//1)+1] == 0 and self.m.map[-int(y+0.75)-1][int(x//1)+1] == 0:
                     self.p.move_x += 0.25
                     self.p.move((self.move_pexel, 0))
 
+            # leftキーが押された時
+            if self.keystatus and button_name == "left":                
+                if self.m.map[-int(y)-1][int((x+0.75)//1)-1] == 0 and self.m.map[-int(y+0.75)-1][int((x+0.75)//1)-1] == 0:
+                    self.p.move_x -= 0.25
+                    self.p.move((-self.move_pexel, 0))
+
+            if self.keystatus == False:
+                print("x:", self.p.move_x)
+                print("y:", self.p.move_y)
+                print("player:", y, x)
+                print()
 
             d = {
                 "characterId": "1",
@@ -145,7 +155,6 @@ class MainScreen(Widget):
                 "status": self.keystatus,
                 "optional": "",
             }
-            # print(d)
             s.sendto(json.dumps(d).encode(), (ADDRESS, PORT))
             self.keycode = ""
         else:
