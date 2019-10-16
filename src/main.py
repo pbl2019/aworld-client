@@ -56,7 +56,7 @@ class Player(Widget):
 
     def move(self, addpos):
         self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
-        print(addpos[0]/20*0.25, addpos[1]/20*0.25)
+        # print(addpos[0]/20*0.25, addpos[1]/20*0.25)
 
 class MainScreen(Widget):
     p = ObjectProperty(None)
@@ -119,35 +119,46 @@ class MainScreen(Widget):
             y = self.p.move_y
             x = self.p.move_x
 
+            move_total = [0, 0]
+
             # upキーが押された時
             if self.keystatus and button_name == "up":
                 if self.m.map[-(int(y//1)+2)][int(x//1)] == 0 and self.m.map[-(int(y//1)+2)][int((x+0.75)//1)] == 0:
-                    self.p.move_y += 0.25
-                    self.p.move((0, self.move_pexel))
+                    self.p.move_y += .25
+                    # self.p.move((0, self.move_pexel))
+                    move_total[1] += self.move_pexel
 
             # downキーが押された時
             if self.keystatus and button_name == "down":
                 if self.m.map[-int((y+0.75)//1)][int(x//1)] == 0 and self.m.map[-int((y+0.75)//1)][int((x+0.75)//1)] == 0:
-                    self.p.move_y -= 0.25
-                    self.p.move((0, -self.move_pexel))
+                    self.p.move_y -= .25
+                    # self.p.move((0, -self.move_pexel))
+                    move_total[1] -= self.move_pexel
             
             # rightキーが押された時
             if self.keystatus and button_name == "right":
                 if self.m.map[-int(y)-1][int(x//1)+1] == 0 and self.m.map[-int(y+0.75)-1][int(x//1)+1] == 0:
-                    self.p.move_x += 0.25
-                    self.p.move((self.move_pexel, 0))
+                    self.p.move_x += .25
+                    # self.p.move((self.move_pexel, 0))
+                    move_total[0] += self.move_pexel
 
             # leftキーが押された時
             if self.keystatus and button_name == "left":                
                 if self.m.map[-int(y)-1][int((x+0.75)//1)-1] == 0 and self.m.map[-int(y+0.75)-1][int((x+0.75)//1)-1] == 0:
-                    self.p.move_x -= 0.25
-                    self.p.move((-self.move_pexel, 0))
+                    self.p.move_x -= .25
+                    # self.p.move((-self.move_pexel, 0))
+                    move_total[0] -= self.move_pexel
 
-            if self.keystatus == False:
-                print("x:", self.p.move_x)
-                print("y:", self.p.move_y)
-                print("player:", y, x)
-                print()
+            # プレイヤーの移動処理
+            if self.keystatus:
+                self.p.move(move_total)
+
+            # プレイヤー位置確認用
+            # if self.keystatus == False:
+            #     print("x:", self.p.move_x)
+            #     print("y:", self.p.move_y)
+            #     print("player:", y, x)
+            #     print()
 
             d = {
                 "characterId": "1",
@@ -185,7 +196,7 @@ def receive_udp():
     while True:
         # 受信
         msg, address = s.recvfrom(8192)
-        # print("message: {}\nfrom: {}".format(msg, address))
+        print("message: {}\nfrom: {}".format(msg, address))
 
 if __name__ == '__main__':
     GameApp().run()
