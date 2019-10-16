@@ -1,0 +1,54 @@
+<ControlPad>:
+    orientation: 'vertical'
+    Label:
+        size_hint_y: 3./8.
+    GridLayout:
+        size_hint_y: 2./8.
+        rows: 3
+        Label:
+        Button:
+            id: btn_N
+            text: '^'
+            on_press: app.move('N')
+        Label:
+        Button:
+            id: btn_W
+            text: '<'
+            on_press: app.move('W')
+        Label:
+        Button:
+            id: btn_E
+            text: '>'
+            on_press: app.move('E')
+        Label:
+        Button:
+            id: btn_S
+            text: 'v'
+            on_press: app.move('S')
+        Label:
+    Label:
+        size_hint_y: 3./8.
+
+<Root>:
+    game: _game
+    orientation: 'horizontal'
+    ControlPad:
+        size_hint_x: 1./8.
+    Game:
+        id: _game
+        size_hint_x: 7./8.
+
+<Game>:
+    canvas:
+        Color:
+            rgb: (.25, .50, .25)
+        Rectangle:
+            size: self.size
+            pos: (0, 0)
+
+<Character>:
+    drct: 'E'
+    source: 'atlas://chara/E0'
+    allow_stretch: True
+    size: (192, 256)
+    size_hint: (None, None)
