@@ -1,13 +1,29 @@
-<Player>:
-    size: 80, 80
-    canvas:
-        Ellipse:
-            pos: self.pos
-            size: self.size
-
 <MainScreen>:
     p: player
+    pa: player_angle
     
     Player:
         id: player
         pos: 80*2, 80*1
+
+    PlayerAngle:
+        id: player_angle
+        pos: 80*2+20, 80*1+60
+
+<Player>:
+    size: 80, 80
+    canvas.after:
+        Color:
+            rgba: 1, 1, 1, 1
+        Ellipse:
+            pos: self.pos
+            size: self.size
+
+<PlayerAngle>:
+    size: 20, 20
+    canvas.after:
+        Color:
+            rgba: 1, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size

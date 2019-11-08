@@ -28,18 +28,18 @@ class Map:
     def __init__(self):
         # マップデータ
         self.map = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-                    [1,0,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,1],
-                    [1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,0,1],
-                    [1,0,0,1,1,0,0,0,0,0,1,0,1,0,1,0,0,1,0,1],
-                    [1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
-                    [1,1,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                    [1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1],
+                    [1,0,0,1,0,0,0,0,0,0,1,0,1,0,1,0,0,1,0,1],
+                    [1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1],
+                    [1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,1,0,0,0,1],
                     [1,1,0,0,0,0,1,1,0,1,0,0,0,0,0,1,0,0,0,1],
                     [1,0,0,1,0,0,1,1,0,1,0,0,0,0,0,1,0,0,0,1],
                     [1,0,0,1,0,0,1,1,0,1,1,0,0,1,1,1,0,0,0,1],
-                    [1,0,0,1,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,1],
                     [1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1],
                     [1,0,0,0,1,0,0,1,0,1,1,0,0,0,0,0,0,1,0,1],
-                    [1,0,0,0,1,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1],
+                    [1,1,1,0,1,0,1,1,0,0,1,0,1,0,1,1,1,1,1,1],
                     [1,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1],
                     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
         # マップの行数,列数を取得
@@ -58,8 +58,17 @@ class Player(Widget):
         self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
         # print(addpos[0]/20*0.25, addpos[1]/20*0.25)
 
+# プレイヤーの向いている方向
+class PlayerAngle(Widget):
+
+    def angle_change(self, player_pos, angle):
+        if angle[0]!=0 or angle[1]!=0:
+            self.pos[0] = player_pos[0] + 30 + angle[0]*2
+            self.pos[1] = player_pos[1] + 30 + angle[1]*2
+
 class MainScreen(Widget):
     p = ObjectProperty(None)
+    pa = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -77,9 +86,9 @@ class MainScreen(Widget):
         for i in range(self.m.row):
             for j in range(self.m.col):
                 if self.m.map[i][j] == 0:
-                    self.canvas.add(Color(0, 1, 0, .7))
+                    self.canvas.add(Color(0, 1, 0, .5))
                 else:
-                    self.canvas.add(Color(0, 0, 1, .5))
+                    self.canvas.add(Color(0, 0, 1, .3))
                 self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
 
         # プレイヤー移動pexel
@@ -95,8 +104,6 @@ class MainScreen(Widget):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         self.keycode = keycode
         self.keystatus = True
-        # print('The key', keycode, 'have been pressed')
-        # print(' - text is', text)
 
         # escapeが押されるとキー入力終了
         if keycode[1] == 'escape':
@@ -125,33 +132,30 @@ class MainScreen(Widget):
             if self.keystatus and button_name == "up":
                 if self.m.map[-(int(y//1)+2)][int(x//1)] == 0 and self.m.map[-(int(y//1)+2)][int((x+0.75)//1)] == 0:
                     self.p.move_y += .25
-                    # self.p.move((0, self.move_pexel))
                     move_total[1] += self.move_pexel
 
             # downキーが押された時
             if self.keystatus and button_name == "down":
                 if self.m.map[-int((y+0.75)//1)][int(x//1)] == 0 and self.m.map[-int((y+0.75)//1)][int((x+0.75)//1)] == 0:
                     self.p.move_y -= .25
-                    # self.p.move((0, -self.move_pexel))
                     move_total[1] -= self.move_pexel
             
             # rightキーが押された時
             if self.keystatus and button_name == "right":
                 if self.m.map[-int(y)-1][int(x//1)+1] == 0 and self.m.map[-int(y+0.75)-1][int(x//1)+1] == 0:
                     self.p.move_x += .25
-                    # self.p.move((self.move_pexel, 0))
                     move_total[0] += self.move_pexel
 
             # leftキーが押された時
             if self.keystatus and button_name == "left":                
                 if self.m.map[-int(y)-1][int((x+0.75)//1)-1] == 0 and self.m.map[-int(y+0.75)-1][int((x+0.75)//1)-1] == 0:
                     self.p.move_x -= .25
-                    # self.p.move((-self.move_pexel, 0))
                     move_total[0] -= self.move_pexel
 
             # プレイヤーの移動処理
             if self.keystatus:
                 self.p.move(move_total)
+                self.pa.angle_change(self.p.pos, move_total)
 
             # プレイヤー位置確認用
             # if self.keystatus == False:
@@ -160,13 +164,13 @@ class MainScreen(Widget):
             #     print("player:", y, x)
             #     print()
 
-            d = {
+            input_key_message = {
                 "characterId": "1",
                 "buttonName": button_name,
                 "status": self.keystatus,
                 "optional": "",
             }
-            s.sendto(json.dumps(d).encode(), (ADDRESS, PORT))
+            s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
             self.keycode = ""
         else:
             button_name = self.keycode
@@ -184,12 +188,18 @@ class GameApp(App):
         s.bind((HOST, PORT))
         receive_udp_thread = threading.Thread(target=receive_udp, daemon=True)
         receive_udp_thread.start()
+        login_message = {
+                "characterId": "",
+                "buttonName": "login",
+                "status": False,
+                "optional": {"id": "1", "password": "1234567890"},
+            }
+        s.sendto(json.dumps(login_message).encode(), (ADDRESS, PORT))
         pass
 
     def build(self):
         ms = MainScreen()
         Clock.schedule_interval(ms.my_callback, 0.01)
-        # Clock.schedule_interval(ms.update, 0.01)
         return ms
 
 def receive_udp():
