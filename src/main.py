@@ -13,7 +13,6 @@ from kivy.animation import Animation
 from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.lang import Builder
 
-
 Builder.load_file('./main.kv')
 
 HOST = ''
