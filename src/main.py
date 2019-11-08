@@ -59,10 +59,19 @@ class Player(Widget):
 # プレイヤーの向いている方向
 class PlayerAngle(Widget):
 
-    def angle_change(self, player_pos, angle):
-        if angle[0]!=0 or angle[1]!=0:
-            self.pos[0] = player_pos[0] + 30 + angle[0]*2
-            self.pos[1] = player_pos[1] + 30 + angle[1]*2
+    def angle_change(self, player_pos, angle_name):
+        if angle_name == "up":
+            self.pos[0] = player_pos[0] + 30 + 0*2
+            self.pos[1] = player_pos[1] + 30 + 20*2
+        elif angle_name == "down":
+            self.pos[0] = player_pos[0] + 30 + 0*2
+            self.pos[1] = player_pos[1] + 30 + -20*2
+        elif angle_name == "left":
+            self.pos[0] = player_pos[0] + 30 + -20*2
+            self.pos[1] = player_pos[1] + 30 + 0*2
+        elif angle_name == "right":
+            self.pos[0] = player_pos[0] + 30 + 20*2
+            self.pos[1] = player_pos[1] + 30 + 0*2
 
 class MainScreen(Widget):
     p = ObjectProperty(None)
@@ -153,7 +162,7 @@ class MainScreen(Widget):
             # プレイヤーの移動処理
             if self.keystatus:
                 self.p.move(move_total)
-                self.pa.angle_change(self.p.pos, move_total)
+                self.pa.angle_change(self.p.pos, self.keycode[1])
 
             # プレイヤー位置確認用
             # if self.keystatus == False:
