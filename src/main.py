@@ -14,7 +14,6 @@ from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProper
 from kivy.lang import Builder
 
 Builder.load_file('./main.kv')
-
 HOST = ''
 PORT = 5000
 ADDRESS = "127.0.0.1" # 自分に送信
