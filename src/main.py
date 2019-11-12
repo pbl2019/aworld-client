@@ -13,6 +13,8 @@ from kivy.animation import Animation
 from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.lang import Builder
 
+import random
+
 Builder.load_file('./main.kv')
 HOST = ''
 PORT = 5000
@@ -60,18 +62,27 @@ class Player(Widget):
 class PlayerAngle(Widget):
 
     def angle_change(self, player_pos, angle_name):
+        # 上を向く
         if angle_name == "up":
             self.pos[0] = player_pos[0] + 30 + 0*2
             self.pos[1] = player_pos[1] + 30 + 20*2
+        # 下を向く
         elif angle_name == "down":
             self.pos[0] = player_pos[0] + 30 + 0*2
             self.pos[1] = player_pos[1] + 30 + -20*2
+        # 左を向く
         elif angle_name == "left":
             self.pos[0] = player_pos[0] + 30 + -20*2
             self.pos[1] = player_pos[1] + 30 + 0*2
+        # 右を向く
         elif angle_name == "right":
             self.pos[0] = player_pos[0] + 30 + 20*2
             self.pos[1] = player_pos[1] + 30 + 0*2
+
+class Other(Widget):
+
+    def move(self, addpos):
+        self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
 
 class MainScreen(Widget):
     p = ObjectProperty(None)
@@ -90,6 +101,7 @@ class MainScreen(Widget):
 
         # マップの線画
         self.m = Map()
+        self.player = Player()
         for i in range(self.m.row):
             for j in range(self.m.col):
                 if self.m.map[i][j] == 0:
@@ -97,6 +109,8 @@ class MainScreen(Widget):
                 else:
                     self.canvas.add(Color(0, 0, 1, .3))
                 self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
+        self.canvas.add(Color(1,1,1,1))
+        self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=self.player.pos))
 
         # プレイヤー移動pexel
         self.move_pexel = self.m.msize/4
@@ -124,10 +138,13 @@ class MainScreen(Widget):
         self.keystatus = False
         return True
 
-    def update(self):
+    def other_update(self, dt):
+        action = ["wait", "up", "left", "right"]
+        a = random.choice(action)
+        print(a)
         pass
 
-    def my_callback(self, dt):
+    def update(self, dt):
         if len(self.keycode) == 2:
             button_name = self.keycode[1]
             y = self.p.move_y
@@ -196,7 +213,7 @@ class GameApp(App):
         receive_udp_thread = threading.Thread(target=receive_udp, daemon=True)
         receive_udp_thread.start()
         login_message = {
-                "characterId": "",
+                "characterId": "1",
                 "buttonName": "login",
                 "status": False,
                 "optional": {"id": "1", "password": "1234567890"},
@@ -206,7 +223,8 @@ class GameApp(App):
 
     def build(self):
         ms = MainScreen()
-        Clock.schedule_interval(ms.my_callback, 0.01)
+        Clock.schedule_interval(ms.update, 0.01)
+        Clock.schedule_interval(ms.other_update, 100.)
         return ms
 
 def receive_udp():
