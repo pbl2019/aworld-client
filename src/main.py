@@ -17,13 +17,13 @@ import random
 
 # Builder.load_file('./main.kv')
 HOST = ''
-PORT = 5000
+PORT = 34255
 ADDRESS = "127.0.0.1" # 自分に送信
 
 s = socket(AF_INET, SOCK_DGRAM)
 
 objects = {
-    "characterId": "",
+    "character_id": "",
     "terrain": [],
     "characters": []
     }
@@ -194,7 +194,7 @@ class MainScreen(Widget):
 
                 # 線画後状態のモック
                 # drow = {
-                #     "characterId": "1",
+                #     "character_id": "1",
                 #     "terrain": {
                 #         "start": {"x": 2, "y": 1},
                 #         "data": self.m.map,
@@ -241,12 +241,12 @@ class MainScreen(Widget):
             #     print()
 
             input_key_message = {
-                "characterId": "1",
-                "buttonName": button_name,
+                "character_id": "1",
+                "button_name": button_name,
                 "status": self.keystatus,
                 "optional": "",
             }
-            # s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
+            s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
             self.keycode = ""
         else:
             button_name = self.keycode
@@ -262,12 +262,12 @@ class GameApp(App):
 
     def on_start(self):
         # バインド
-        s.bind((HOST, PORT))
+        #s.bind((HOST, PORT))
         receive_udp_thread = threading.Thread(target=receive_udp, daemon=True)
         receive_udp_thread.start()
         login_message = {
-                "characterId": "1",
-                "buttonName": "login",
+                "character_id": "1",
+                "button_name": "login",
                 "status": False,
                 "optional": {"id": "1", "password": "1234567890"},
             }
@@ -283,12 +283,12 @@ class GameApp(App):
 def receive_udp():
     while True:
         # 受信
-        msg, address = s.recvfrom(8192)
+        msg, address = s.recvfrom(34253)
         # print("message: {}\nfrom: {}".format(msg, address))
         # print("address:", address)
         game_data = json.loads(msg.decode('utf-8'))
-        if "characterId" in game_data.keys():
-            objects["characterId"] = game_data["characterId"]
+        if "character_id" in game_data.keys():
+            objects["character_id"] = game_data["character_id"]
         if "characters" in game_data.keys():
             objects["characters"] = game_data["characters"]
         if "terrain" in game_data.keys():
