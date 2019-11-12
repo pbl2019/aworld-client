@@ -15,12 +15,18 @@ from kivy.lang import Builder
 
 import random
 
-Builder.load_file('./main.kv')
+# Builder.load_file('./main.kv')
 HOST = ''
 PORT = 5000
 ADDRESS = "127.0.0.1" # 自分に送信
 
 s = socket(AF_INET, SOCK_DGRAM)
+
+objects = {
+    "characterId": "",
+    "terrain": [],
+    "characters": []
+    }
 
 # マップのクラス
 class Map:
@@ -51,15 +57,21 @@ class Map:
 
 class Player(Widget):
 
-    move_x = NumericProperty(2)
-    move_y = NumericProperty(1)
+    def __init__(self):
+        self.move_x = 2.
+        self.move_y = 1.
+        self.pos = 80*2, 80*1
 
     def move(self, addpos):
         self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
-        # print(addpos[0]/20*0.25, addpos[1]/20*0.25)
+        # print("move:", addpos[0]/20*0.25, addpos[1]/20*0.25)
 
 # プレイヤーの向いている方向
 class PlayerAngle(Widget):
+
+    def __init__(self):
+        self.pos = [80*2+30, 80*1+70]
+        self.size = 20, 20
 
     def angle_change(self, player_pos, angle_name):
         # 上を向く
@@ -79,14 +91,8 @@ class PlayerAngle(Widget):
             self.pos[0] = player_pos[0] + 30 + 20*2
             self.pos[1] = player_pos[1] + 30 + 0*2
 
-class Other(Widget):
-
-    def move(self, addpos):
-        self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
-
 class MainScreen(Widget):
-    p = ObjectProperty(None)
-    pa = ObjectProperty(None)
+    # pa = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -99,18 +105,23 @@ class MainScreen(Widget):
         self.keycode = ""
         self.keystatus = False
 
-        # マップの線画
         self.m = Map()
         self.player = Player()
+        self.player_angle = PlayerAngle()
+        # マップの線画
         for i in range(self.m.row):
             for j in range(self.m.col):
                 if self.m.map[i][j] == 0:
                     self.canvas.add(Color(0, 1, 0, .5))
-                else:
+                elif self.m.map[i][j] == 1:
                     self.canvas.add(Color(0, 0, 1, .3))
                 self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
+        # キャラクターの線画
         self.canvas.add(Color(1,1,1,1))
         self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=self.player.pos))
+        # キャラクターアングルの線画
+        self.canvas.add(Color(1,0,0,1))
+        self.canvas.add(Rectangle(size=(self.player_angle.size[0], self.player_angle.size[1]), pos=self.player_angle.pos))
 
         # プレイヤー移動pexel
         self.move_pexel = self.m.msize/4
@@ -141,50 +152,91 @@ class MainScreen(Widget):
     def other_update(self, dt):
         action = ["wait", "up", "left", "right"]
         a = random.choice(action)
-        print(a)
+        # print(a)
         pass
 
     def update(self, dt):
         if len(self.keycode) == 2:
             button_name = self.keycode[1]
-            y = self.p.move_y
-            x = self.p.move_x
+            y = self.player.move_y
+            x = self.player.move_x
 
             move_total = [0, 0]
 
             # upキーが押された時
             if self.keystatus and button_name == "up":
                 if self.m.map[-(int(y//1)+2)][int(x//1)] == 0 and self.m.map[-(int(y//1)+2)][int((x+0.75)//1)] == 0:
-                    self.p.move_y += .25
+                    self.player.move_y += .25
                     move_total[1] += self.move_pexel
 
             # downキーが押された時
             if self.keystatus and button_name == "down":
                 if self.m.map[-int((y+0.75)//1)][int(x//1)] == 0 and self.m.map[-int((y+0.75)//1)][int((x+0.75)//1)] == 0:
-                    self.p.move_y -= .25
+                    self.player.move_y -= .25
                     move_total[1] -= self.move_pexel
             
             # rightキーが押された時
             if self.keystatus and button_name == "right":
                 if self.m.map[-int(y)-1][int(x//1)+1] == 0 and self.m.map[-int(y+0.75)-1][int(x//1)+1] == 0:
-                    self.p.move_x += .25
+                    self.player.move_x += .25
                     move_total[0] += self.move_pexel
 
             # leftキーが押された時
             if self.keystatus and button_name == "left":                
                 if self.m.map[-int(y)-1][int((x+0.75)//1)-1] == 0 and self.m.map[-int(y+0.75)-1][int((x+0.75)//1)-1] == 0:
-                    self.p.move_x -= .25
+                    self.player.move_x -= .25
                     move_total[0] -= self.move_pexel
 
             # プレイヤーの移動処理
             if self.keystatus:
-                self.p.move(move_total)
-                self.pa.angle_change(self.p.pos, self.keycode[1])
+                self.player.move(move_total)
+                self.player_angle.angle_change(self.player.pos, self.keycode[1])
+
+                # 線画後状態のモック
+                # drow = {
+                #     "characterId": "1",
+                #     "terrain": {
+                #         "start": {"x": 2, "y": 1},
+                #         "data": self.m.map,
+                #     },
+                #     "characters": [
+                #         {
+                #         "character_id": "1",
+                #         "x": self.player.pos[0],
+                #         "y": self.player.pos[1],
+                #         },
+                #         {
+                #         "character_id": "2",
+                #         "x": self.player.pos[0]+80*5,
+                #         "y": self.player.pos[1]+80*3,
+                #         },
+                #     ]
+                # }
+                # s.sendto(json.dumps(drow).encode(), (ADDRESS, PORT))
+
+            # キャンバスのリセット
+            self.canvas.clear()
+            # マップの線画
+            for i in range(self.m.row):
+                for j in range(self.m.col):
+                    if self.m.map[i][j] == 0:
+                        self.canvas.add(Color(0, 1, 0, .5))
+                    else:
+                        self.canvas.add(Color(0, 0, 1, .3))
+                    self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
+            # キャラクターの線画
+            for o in objects["characters"]:
+                self.canvas.add(Color(1,1,1,1))
+                # self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=self.player.pos))
+                self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=(o["x"], o["y"])))
+            # キャラクターアングルの線画
+            self.canvas.add(Color(1,0,0,1))
+            self.canvas.add(Rectangle(size=(self.player_angle.size[0], self.player_angle.size[1]), pos=self.player_angle.pos))
 
             # プレイヤー位置確認用
             # if self.keystatus == False:
-            #     print("x:", self.p.move_x)
-            #     print("y:", self.p.move_y)
+            #     print("x:", self.player.move_x)
+            #     print("y:", self.player.move_y)
             #     print("player:", y, x)
             #     print()
 
@@ -194,10 +246,11 @@ class MainScreen(Widget):
                 "status": self.keystatus,
                 "optional": "",
             }
-            s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
+            # s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
             self.keycode = ""
         else:
             button_name = self.keycode
+            
 
 class GameApp(App):
 
@@ -231,7 +284,15 @@ def receive_udp():
     while True:
         # 受信
         msg, address = s.recvfrom(8192)
-        print("message: {}\nfrom: {}".format(msg, address))
+        # print("message: {}\nfrom: {}".format(msg, address))
+        # print("address:", address)
+        game_data = json.loads(msg.decode('utf-8'))
+        if "characterId" in game_data.keys():
+            objects["characterId"] = game_data["characterId"]
+        if "characters" in game_data.keys():
+            objects["characters"] = game_data["characters"]
+        if "terrain" in game_data.keys():
+            objects["terrain"] = game_data["terrain"]
 
 if __name__ == '__main__':
     GameApp().run()
