@@ -268,7 +268,7 @@ class GameApp(App):
         login_message = {
                 "character_id": "1",
                 "button_name": "login",
-                "status": False,
+                "status": True,
                 "optional": {"id": "1", "password": "1234567890"},
             }
         s.sendto(json.dumps(login_message).encode(), (ADDRESS, PORT))
