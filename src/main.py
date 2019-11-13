@@ -1,6 +1,7 @@
 from socket import socket, AF_INET, SOCK_DGRAM
 import json
 import threading
+import time
 
 from kivy.app import App
 from kivy.uix.widget import Widget
@@ -16,6 +17,7 @@ from kivy.lang import Builder
 import random
 
 # Builder.load_file('./main.kv')
+SALT = int(round(time.time() * 1000))
 HOST = ''
 PORT = 34255
 ADDRESS = "127.0.0.1" # 自分に送信
@@ -240,11 +242,21 @@ class MainScreen(Widget):
             #     print("player:", y, x)
             #     print()
 
+            optional = {}
+            if button_name == "up":
+                optional["speed"] = 1.0
+            elif button_name == "left":
+                optional["angle"] = 0.01
+            elif button_name == "right":
+                optional["angle"] = 0.01
+            elif button_name == "down":
+                optional["speed"] = 0.5
             input_key_message = {
-                "character_id": "1",
+                "salt": SALT,
+                "character_id": "unused",
                 "button_name": button_name,
                 "status": self.keystatus,
-                "optional": "",
+                "optional": optional,
             }
             s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
             self.keycode = ""
@@ -266,10 +278,11 @@ class GameApp(App):
         receive_udp_thread = threading.Thread(target=receive_udp, daemon=True)
         receive_udp_thread.start()
         login_message = {
-                "character_id": "1",
+                "salt": SALT,
+                "character_id": "unused",
                 "button_name": "login",
                 "status": True,
-                "optional": {"id": "1", "password": "1234567890"},
+                "optional": {},
             }
         s.sendto(json.dumps(login_message).encode(), (ADDRESS, PORT))
         pass
