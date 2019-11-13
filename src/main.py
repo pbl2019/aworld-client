@@ -1,5 +1,6 @@
 from socket import socket, AF_INET, SOCK_DGRAM
 import json
+import math
 import threading
 import time
 
@@ -27,7 +28,7 @@ s = socket(AF_INET, SOCK_DGRAM)
 objects = {
     "character_id": "",
     "terrain": [],
-    "characters": []
+    "characters": {}
     }
 
 # マップのクラス
@@ -60,41 +61,15 @@ class Map:
 class Player(Widget):
 
     def __init__(self):
-        self.move_x = 2.
-        self.move_y = 1.
-        self.pos = 80*2, 80*1
+        self.move_x = 0.
+        self.move_y = 0.
+        self.pos = 80*0, 80*0
 
     def move(self, addpos):
         self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
         # print("move:", addpos[0]/20*0.25, addpos[1]/20*0.25)
 
-# プレイヤーの向いている方向
-class PlayerAngle(Widget):
-
-    def __init__(self):
-        self.pos = [80*2+30, 80*1+70]
-        self.size = 20, 20
-
-    def angle_change(self, player_pos, angle_name):
-        # 上を向く
-        if angle_name == "up":
-            self.pos[0] = player_pos[0] + 30 + 0*2
-            self.pos[1] = player_pos[1] + 30 + 20*2
-        # 下を向く
-        elif angle_name == "down":
-            self.pos[0] = player_pos[0] + 30 + 0*2
-            self.pos[1] = player_pos[1] + 30 + -20*2
-        # 左を向く
-        elif angle_name == "left":
-            self.pos[0] = player_pos[0] + 30 + -20*2
-            self.pos[1] = player_pos[1] + 30 + 0*2
-        # 右を向く
-        elif angle_name == "right":
-            self.pos[0] = player_pos[0] + 30 + 20*2
-            self.pos[1] = player_pos[1] + 30 + 0*2
-
 class MainScreen(Widget):
-    # pa = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -109,21 +84,6 @@ class MainScreen(Widget):
 
         self.m = Map()
         self.player = Player()
-        self.player_angle = PlayerAngle()
-        # マップの線画
-        for i in range(self.m.row):
-            for j in range(self.m.col):
-                if self.m.map[i][j] == 0:
-                    self.canvas.add(Color(0, 1, 0, .5))
-                elif self.m.map[i][j] == 1:
-                    self.canvas.add(Color(0, 0, 1, .3))
-                self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
-        # キャラクターの線画
-        self.canvas.add(Color(1,1,1,1))
-        self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=self.player.pos))
-        # キャラクターアングルの線画
-        self.canvas.add(Color(1,0,0,1))
-        self.canvas.add(Rectangle(size=(self.player_angle.size[0], self.player_angle.size[1]), pos=self.player_angle.pos))
 
         # プレイヤー移動pexel
         self.move_pexel = self.m.msize/4
@@ -192,7 +152,6 @@ class MainScreen(Widget):
             # プレイヤーの移動処理
             if self.keystatus:
                 self.player.move(move_total)
-                self.player_angle.angle_change(self.player.pos, self.keycode[1])
 
                 # 線画後状態のモック
                 # drow = {
@@ -216,31 +175,6 @@ class MainScreen(Widget):
                 # }
                 # s.sendto(json.dumps(drow).encode(), (ADDRESS, PORT))
 
-            # キャンバスのリセット
-            self.canvas.clear()
-            # マップの線画
-            for i in range(self.m.row):
-                for j in range(self.m.col):
-                    if self.m.map[i][j] == 0:
-                        self.canvas.add(Color(0, 1, 0, .5))
-                    else:
-                        self.canvas.add(Color(0, 0, 1, .3))
-                    self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
-            # キャラクターの線画
-            for o in objects["characters"]:
-                self.canvas.add(Color(1,1,1,1))
-                # self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=self.player.pos))
-                self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=(o["x"], o["y"])))
-            # キャラクターアングルの線画
-            self.canvas.add(Color(1,0,0,1))
-            self.canvas.add(Rectangle(size=(self.player_angle.size[0], self.player_angle.size[1]), pos=self.player_angle.pos))
-
-            # プレイヤー位置確認用
-            # if self.keystatus == False:
-            #     print("x:", self.player.move_x)
-            #     print("y:", self.player.move_y)
-            #     print("player:", y, x)
-            #     print()
 
             optional = {}
             if button_name == "up":
@@ -251,6 +185,7 @@ class MainScreen(Widget):
                 optional["angle"] = 0.01
             elif button_name == "down":
                 optional["speed"] = 0.5
+
             input_key_message = {
                 "salt": SALT,
                 "character_id": "unused",
@@ -262,6 +197,32 @@ class MainScreen(Widget):
             self.keycode = ""
         else:
             button_name = self.keycode
+
+        # キャンバスのリセット
+        self.canvas.clear()
+        # マップの線画
+        for i in range(self.m.row):
+            for j in range(self.m.col):
+                if self.m.map[i][j] == 0:
+                    self.canvas.add(Color(0, 1, 0, .5))
+                else:
+                    self.canvas.add(Color(0, 0, 1, .3))
+                self.canvas.add(Rectangle(size=(self.m.msize, self.m.msize), pos=(self.m.msize*j, self.m.msize*(self.m.row-i-1))))
+                
+        # アングルマーカーの位置
+        def angle_pos(char):
+            x = o["x"] + 30 + 30*math.sin(o["angle"])
+            y = o["y"] + 30 + 30*math.cos(o["angle"])
+            return x,y
+            
+        for o in objects["characters"].values():
+            # キャラクターの線画
+            self.canvas.add(Color(1,1,1,1))
+            self.canvas.add(Ellipse(size=(self.m.msize, self.m.msize), pos=(o["x"], o["y"])))
+            # キャラクターアングルの線画
+            self.canvas.add(Color(1,0,0,1))
+            self.canvas.add(Rectangle(size=(20, 20), pos=angle_pos(o)))
+
             
 
 class GameApp(App):
@@ -297,13 +258,13 @@ def receive_udp():
     while True:
         # 受信
         msg, address = s.recvfrom(34253)
-        # print("message: {}\nfrom: {}".format(msg, address))
         # print("address:", address)
         game_data = json.loads(msg.decode('utf-8'))
         if "character_id" in game_data.keys():
             objects["character_id"] = game_data["character_id"]
         if "characters" in game_data.keys():
-            objects["characters"] = game_data["characters"]
+            for character in game_data["characters"]:
+                objects["characters"][character["character_id"]] = character
         if "terrain" in game_data.keys():
             objects["terrain"] = game_data["terrain"]
 
