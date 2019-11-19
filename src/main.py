@@ -6,6 +6,7 @@ import time
 
 from kivy.app import App
 from kivy.uix.widget import Widget
+from kivy.uix.floatlayout import FloatLayout
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.modules import keybinding
@@ -23,7 +24,7 @@ from constants import WINDOWSIZE
 Config.set('graphics', 'width', WINDOWSIZE[0])
 Config.set('graphics', 'height', WINDOWSIZE[1])
 
-# Builder.load_file('./main.kv')
+Builder.load_file('./main.kv')
 SALT = int(round(time.time() * 1000))
 HOST = ''
 PORT = 34255
@@ -36,6 +37,8 @@ objects = {
     "terrain": Map(),
     "characters": {}
     }
+should_terrain_redraw = False
+should_objects_redraw = False
 
 
 class Player(Widget):
@@ -49,7 +52,54 @@ class Player(Widget):
         self.pos = (addpos[0]+self.pos[0], addpos[1]+self.pos[1])
         # print("move:", addpos[0]/20*0.25, addpos[1]/20*0.25)
 
-class MainScreen(Widget):
+class Terrain(Widget):
+
+    def __init__(self, **kwargs):
+        super(Terrain, self).__init__(**kwargs)
+        self.redraw()
+
+    def redraw(self):
+        m = objects["terrain"]
+        # キャンバスのリセット
+        self.canvas.clear()
+        # マップの線画
+        self.canvas.add(Color(0, 1, 0, .5))
+        for i in range(m.row):
+            for j in range(m.col):
+                if m.map[i][j] == 0:
+                    self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, Window.height-m.msize*(m.row-i-1))))
+        self.canvas.add(Color(0, 0, 1, .3))
+        for i in range(m.row):
+            for j in range(m.col):
+                if m.map[i][j] == 1:
+                    self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, Window.height-m.msize*(m.row-i-1))))
+
+class ObjectLayer(Widget):
+
+    def __init__(self, **kwargs):
+        super(ObjectLayer, self).__init__(**kwargs)
+        self.redraw()
+
+    def angle_pos(self, o):
+        radius = objects["terrain"].msize*0.4
+        x = o["x"] + radius * math.sin(o["angle"])
+        y = o["y"] + radius * math.cos(o["angle"])
+        return x, y
+
+    def redraw(self):
+        m = objects["terrain"]
+        self.canvas.clear()
+        # アングルマーカーの位置
+        for o in objects["characters"].values():
+            # キャラクターの線画
+            self.canvas.add(Color(1,1,1,1))
+            self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
+            # キャラクターアングルの線画
+            self.canvas.add(Color(1,0,0,1))
+            ap = self.angle_pos(o)
+            self.canvas.add(Ellipse(size=(m.msize*0.2, m.msize*0.2), pos=(ap[0]-m.msize*0.1, ap[1]-m.msize*0.1)))
+
+class MainScreen(FloatLayout):
 
     def __init__(self, **kwargs):
         super(MainScreen, self).__init__(**kwargs)
@@ -64,6 +114,8 @@ class MainScreen(Widget):
 
         self.m = objects["terrain"]
         self.player = Player()
+        self.terrain = getattr(self.ids, "terrain")
+        self.object_layer = getattr(self.ids, "objects")
 
     # キーボード入力が終了した時
     def _keyboard_closed(self):
@@ -87,6 +139,15 @@ class MainScreen(Widget):
         self.keycode = keycode
         self.keystatus = False
         return True
+
+    def check_redraw(self, dt):
+        global should_terrain_redraw, should_objects_redraw
+        if should_terrain_redraw:
+            self.terrain.redraw()
+            should_terrain_redraw = False
+        if should_objects_redraw:
+            self.object_layer.redraw()
+            should_objects_redraw = False
 
     def other_update(self, dt):
         action = ["wait", "up", "left", "right"]
@@ -120,34 +181,6 @@ class MainScreen(Widget):
         else:
             button_name = self.keycode
 
-        # キャンバスのリセット
-        self.canvas.clear()
-        # マップの線画
-        for i in range(m.row):
-            for j in range(m.col):
-                if m.map[i][j] == 0:
-                    self.canvas.add(Color(0, 1, 0, .5))
-                else:
-                    self.canvas.add(Color(0, 0, 1, .3))
-                self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, Window.height-m.msize*(m.row-i-1))))
-                
-        # アングルマーカーの位置
-        def angle_pos(o):
-            radius = m.msize*0.4
-            x = o["x"] + radius * math.sin(o["angle"])
-            y = o["y"] + radius * math.cos(o["angle"])
-            return x, y
-        for o in objects["characters"].values():
-            # キャラクターの線画
-            self.canvas.add(Color(1,1,1,1))
-            self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
-            # キャラクターアングルの線画
-            self.canvas.add(Color(1,0,0,1))
-            ap = angle_pos(o)
-            self.canvas.add(Ellipse(size=(m.msize*0.2, m.msize*0.2), pos=(ap[0]-m.msize*0.1, ap[1]-m.msize*0.1)))
-
-            
-
 class GameApp(App):
 
     title = "Main screen"
@@ -173,11 +206,13 @@ class GameApp(App):
 
     def build(self):
         ms = MainScreen()
+        Clock.schedule_interval(ms.check_redraw, 1/60)
         Clock.schedule_interval(ms.update, 0.01)
         Clock.schedule_interval(ms.other_update, 100.)
         return ms
 
 def receive_udp():
+    global should_terrain_redraw, should_objects_redraw
     while True:
         # 受信
         msg, address = s.recvfrom(34253)
@@ -186,6 +221,7 @@ def receive_udp():
         if "character_id" in game_data.keys():
             objects["character_id"] = game_data["character_id"]
         if "characters" in game_data.keys():
+            should_objects_redraw = True
             for character in game_data["characters"]:
                 objects["characters"][character["character_id"]] = character
         if "terrain" in game_data.keys() and game_data["terrain"]:
@@ -198,6 +234,7 @@ def receive_udp():
             if width != objects["terrain"].width or height != objects["terrain"].height:
                 print("Overwrite terrain")
                 objects["terrain"] = Map(width=width, height=height, data=data)
+                should_terrain_redraw = True
             else:
                 pass
 
