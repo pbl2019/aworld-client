@@ -28,7 +28,7 @@ Builder.load_file('./main.kv')
 SALT = int(round(time.time() * 1000))
 HOST = ''
 PORT = 34255
-ADDRESS = "127.0.0.1" # 自分に送信
+ADDRESS = "0.0.0.0" # 自分に送信
 
 s = socket(AF_INET, SOCK_DGRAM)
 
@@ -216,7 +216,7 @@ def receive_udp():
     while True:
         # 受信
         msg, address = s.recvfrom(34253)
-        # print("address:", address)
+        print("address:", address)
         game_data = json.loads(msg.decode('utf-8'))
         if "character_id" in game_data.keys():
             objects["character_id"] = game_data["character_id"]
