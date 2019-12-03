@@ -12,10 +12,12 @@ from kivy.core.window import Window
 from kivy.modules import keybinding
 from kivy.graphics import Color, Rectangle, Ellipse
 from kivy.animation import Animation
+from kivy.core.text import Label
 
 from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.lang import Builder
 from kivy.config import Config
+import japanize_kivy
 
 import random
 from map import Map
@@ -94,14 +96,23 @@ class ObjectLayer(Widget):
             if o["is_dropped"]:
                 self.canvas.add(Color(1,1,0,1))
                 self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
-        for o in objects["characters"].values():
+        for key, o in objects["characters"].items():
+            if key == objects["character_id"]:
+                self.canvas.add(Color(1,1,1,1))
+            else:
+                self.canvas.add(Color(1,0,0,1))
             # キャラクターの線画
-            self.canvas.add(Color(1,1,1,1))
             self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
             # キャラクターアングルの線画
             self.canvas.add(Color(1,0,0,1))
             ap = self.angle_pos(o)
             self.canvas.add(Ellipse(size=(m.msize*0.2, m.msize*0.2), pos=(ap[0]-m.msize*0.1, ap[1]-m.msize*0.1)))
+        if objects["character_id"] and objects["character_id"] in objects["characters"]:
+            self.canvas.add(Color(1,1,1,1))
+            for idx,item_id in enumerate(objects["characters"][objects["character_id"]]["items"]):
+                label = Label(text=objects["items"][item_id]["name"], font_size=m.msize*2)
+                label.refresh()
+                self.canvas.add(Rectangle(size=label.texture.size, pos=(0, idx*m.msize*2), texture=label.texture))
 
 class MainScreen(FloatLayout):
 

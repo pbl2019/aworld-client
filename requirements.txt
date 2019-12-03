@@ -1,0 +1,1 @@
+japanize-kivy == 0.1.1
