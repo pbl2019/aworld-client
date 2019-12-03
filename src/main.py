@@ -1,5 +1,5 @@
-from socket import socket, AF_INET, SOCK_DGRAM
-import json
+from game_client.tools import GameClient
+
 import math
 import threading
 import time
@@ -26,20 +26,11 @@ Config.set('graphics', 'height', WINDOWSIZE[1])
 
 Builder.load_file('./main.kv')
 SALT = int(round(time.time() * 1000))
-HOST = ''
-PORT = 34255
-ADDRESS = "127.0.0.1" # 自分に送信
 
-s = socket(AF_INET, SOCK_DGRAM)
+gc = GameClient()
 
-objects = {
-    "character_id": "",
-    "terrain": Map(),
-    "characters": {}
-    }
-should_terrain_redraw = False
-should_objects_redraw = False
-
+gc.set_port(34255, 34253)
+gc.set_address("127.0.0.1")
 
 class Player(Widget):
 
@@ -59,7 +50,7 @@ class Terrain(Widget):
         self.redraw()
 
     def redraw(self):
-        m = objects["terrain"]
+        m = gc.objects["terrain"]
         # キャンバスのリセット
         self.canvas.clear()
         # マップの線画
@@ -81,16 +72,16 @@ class ObjectLayer(Widget):
         self.redraw()
 
     def angle_pos(self, o):
-        radius = objects["terrain"].msize*0.4
+        radius = gc.objects["terrain"].msize*0.4
         x = o["x"] + radius * math.sin(o["angle"])
         y = o["y"] + radius * math.cos(o["angle"])
         return x, y
 
     def redraw(self):
-        m = objects["terrain"]
+        m = gc.objects["terrain"]
         self.canvas.clear()
         # アングルマーカーの位置
-        for o in objects["characters"].values():
+        for o in gc.objects["characters"].values():
             # キャラクターの線画
             self.canvas.add(Color(1,1,1,1))
             self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
@@ -112,7 +103,7 @@ class MainScreen(FloatLayout):
         self.keycode = ""
         self.keystatus = False
 
-        self.m = objects["terrain"]
+        self.m = gc.objects["terrain"]
         self.player = Player()
         self.terrain = getattr(self.ids, "terrain")
         self.object_layer = getattr(self.ids, "objects")
@@ -141,13 +132,12 @@ class MainScreen(FloatLayout):
         return True
 
     def check_redraw(self, dt):
-        global should_terrain_redraw, should_objects_redraw
-        if should_terrain_redraw:
+        if gc.should_terrain_redraw:
             self.terrain.redraw()
-            should_terrain_redraw = False
-        if should_objects_redraw:
+            gc.should_terrain_redraw = False
+        if gc.should_objects_redraw:
             self.object_layer.redraw()
-            should_objects_redraw = False
+            gc.should_objects_redraw = False
 
     def other_update(self, dt):
         action = ["wait", "up", "left", "right"]
@@ -156,7 +146,7 @@ class MainScreen(FloatLayout):
         pass
 
     def update(self, dt):
-        m = objects["terrain"]
+        m = gc.objects["terrain"]
         if len(self.keycode) == 2:
             button_name = self.keycode[1]
             optional = {}
@@ -169,14 +159,7 @@ class MainScreen(FloatLayout):
             elif button_name == "down":
                 optional["speed"] = 0.1
 
-            input_key_message = {
-                "salt": SALT,
-                "character_id": "unused",
-                "button_name": button_name,
-                "status": self.keystatus,
-                "optional": optional,
-            }
-            s.sendto(json.dumps(input_key_message).encode(), (ADDRESS, PORT))
+            gc.send_key_message(SALT, 'unused', button_name, self.keystatus, optional)
             self.keycode = ""
         else:
             button_name = self.keycode
@@ -186,22 +169,13 @@ class GameApp(App):
     title = "Main screen"
 
     def on_stop(self):
-        s.close()
+        gc.game_client_close()
         return True
 
     def on_start(self):
-        # バインド
-        #s.bind((HOST, PORT))
         receive_udp_thread = threading.Thread(target=receive_udp, daemon=True)
         receive_udp_thread.start()
-        login_message = {
-                "salt": SALT,
-                "character_id": "unused",
-                "button_name": "login",
-                "status": True,
-                "optional": {},
-            }
-        s.sendto(json.dumps(login_message).encode(), (ADDRESS, PORT))
+        gc.send_key_message(SALT, 'unused', "login", True, {})
         pass
 
     def build(self):
@@ -212,31 +186,9 @@ class GameApp(App):
         return ms
 
 def receive_udp():
-    global should_terrain_redraw, should_objects_redraw
     while True:
         # 受信
-        msg, address = s.recvfrom(34253)
-        # print("address:", address)
-        game_data = json.loads(msg.decode('utf-8'))
-        if "character_id" in game_data.keys():
-            objects["character_id"] = game_data["character_id"]
-        if "characters" in game_data.keys():
-            should_objects_redraw = True
-            for character in game_data["characters"]:
-                objects["characters"][character["character_id"]] = character
-        if "terrain" in game_data.keys() and game_data["terrain"]:
-            terrain = game_data["terrain"]
-            width = terrain["width"]
-            height = terrain["height"]
-            ox = terrain["origin"]["x"]
-            oy = terrain["origin"]["y"]
-            data = terrain["data"]
-            if width != objects["terrain"].width or height != objects["terrain"].height:
-                print("Overwrite terrain")
-                objects["terrain"] = Map(width=width, height=height, data=data)
-                should_terrain_redraw = True
-            else:
-                pass
+        print(gc.recieve())
 
 if __name__ == '__main__':
     GameApp().run()
