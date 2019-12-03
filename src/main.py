@@ -35,7 +35,8 @@ s = socket(AF_INET, SOCK_DGRAM)
 objects = {
     "character_id": "",
     "terrain": Map(),
-    "characters": {}
+    "characters": {},
+    "items": {},
     }
 should_terrain_redraw = False
 should_objects_redraw = False
@@ -89,7 +90,10 @@ class ObjectLayer(Widget):
     def redraw(self):
         m = objects["terrain"]
         self.canvas.clear()
-        # アングルマーカーの位置
+        for o in objects["items"].values():
+            if o["is_dropped"]:
+                self.canvas.add(Color(1,1,0,1))
+                self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
         for o in objects["characters"].values():
             # キャラクターの線画
             self.canvas.add(Color(1,1,1,1))
@@ -237,6 +241,10 @@ def receive_udp():
                 should_terrain_redraw = True
             else:
                 pass
+        if "items" in game_data.keys():
+            should_objects_redraw = True
+            for item in game_data["items"]:
+                objects["items"][item["item_id"]] = item
 
 if __name__ == '__main__':
     GameApp().run()
