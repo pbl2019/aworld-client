@@ -1,12 +1,24 @@
 # aworld-client
 
-プログラムの実行には以下が必要です  
-・kivy
+## Install
 
-以下のコマンドでゲーム画面を表示  
+```
+$ pip install -r requirements.txt
+```
+
+## Play
 
 ```
 $ python main.py
 ```
 
-十字キーでプレイヤーが移動します。
+## Buttons
+
+| Keyboard |        Action        |
+| -------- | -------------------- |
+| Left(←)  | Rotate to left       |
+| Right(→) | Rotate to right      |
+| Up(↑)    | Move forward         |
+| Down(↓)  | Move backward        |
+| Space    | Pick up item         |
+| a        | Attack               |

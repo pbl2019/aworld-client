@@ -1,1 +1,2 @@
 japanize-kivy == 0.1.1
+-e git+https://github.com/pbl2019/aworld-client-core.git#egg=game_client-0.0.9
