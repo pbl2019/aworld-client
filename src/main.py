@@ -88,6 +88,8 @@ class ObjectLayer(Widget):
                 self.canvas.add(Color(1,1,0,1))
                 self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
         for key, o in gc.objects["characters"].items():
+            if o["is_dead"]:
+                continue
             if key == gc.objects["character_id"]:
                 self.canvas.add(Color(1,1,1,1))
             else:
