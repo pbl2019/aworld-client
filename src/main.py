@@ -74,38 +74,45 @@ class ObjectLayer(Widget):
         self.redraw()
 
     def angle_pos(self, o):
-        radius = gc.objects["terrain"].msize*0.4
-        x = o["x"] + radius * math.sin(o["angle"])
-        y = o["y"] + radius * math.cos(o["angle"])
+        m = gc.objects["terrain"]
+        radius = m.msize*0.4
+        x = o["x"] * m.msize + radius * math.sin(o["angle"])
+        y = o["y"] * m.msize + radius * math.cos(o["angle"])
         return x, y
 
     def redraw(self):
         m = gc.objects["terrain"]
+        cid = gc.objects["character_id"]
         self.canvas.clear()
 
         for o in gc.objects["items"].values():
             if o["is_dropped"]:
                 self.canvas.add(Color(1,1,0,1))
-                self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
+                self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]*m.msize-m.msize/2, o["y"]*m.msize-m.msize/2)))
         for key, o in gc.objects["characters"].items():
             if o["is_dead"]:
                 continue
-            if key == gc.objects["character_id"]:
+            if key == cid:
                 self.canvas.add(Color(1,1,1,1))
             else:
                 self.canvas.add(Color(1,0,0,1))
             # キャラクターの線画
-            self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]-m.msize/2, o["y"]-m.msize/2)))
+            self.canvas.add(Ellipse(size=(m.msize, m.msize), pos=(o["x"]*m.msize-m.msize/2, o["y"]*m.msize-m.msize/2)))
             # キャラクターアングルの線画
             self.canvas.add(Color(1,0,0,1))
             ap = self.angle_pos(o)
             self.canvas.add(Ellipse(size=(m.msize*0.2, m.msize*0.2), pos=(ap[0]-m.msize*0.1, ap[1]-m.msize*0.1)))
-        if gc.objects["character_id"] and gc.objects["character_id"] in gc.objects["characters"]:
+        if cid and cid in gc.objects["characters"]:
             self.canvas.add(Color(1,1,1,1))
-            for idx,item_id in enumerate(gc.objects["characters"][gc.objects["character_id"]]["items"]):
+            # render item names
+            for idx,item_id in enumerate(gc.objects["characters"][cid]["items"]):
                 label = Label(text=gc.objects["items"][item_id]["name"], font_size=m.msize*2)
                 label.refresh()
                 self.canvas.add(Rectangle(size=label.texture.size, pos=(0, idx*m.msize*2), texture=label.texture))
+            # render position
+            label = Label(text="{}, {}".format(gc.objects["characters"][cid]["x"], gc.objects["characters"][cid]["y"]), font_size=m.msize*2)
+            label.refresh()
+            self.canvas.add(Rectangle(size=label.texture.size, pos=(0, WINDOWSIZE[1]-m.msize*2), texture=label.texture))
 
 class MainScreen(FloatLayout):
 
@@ -168,13 +175,13 @@ class MainScreen(FloatLayout):
             button_name = self.keycode[1]
             optional = {}
             if button_name == "up":
-                optional["speed"] = 0.25
+                optional["speed"] = 0.025
             elif button_name == "left":
                 optional["angle"] = 0.01
             elif button_name == "right":
                 optional["angle"] = 0.01
             elif button_name == "down":
-                optional["speed"] = 0.1
+                optional["speed"] = 0.005
             elif button_name == "i":
                 optional["item_index"] = 0
 
