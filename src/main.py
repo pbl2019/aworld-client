@@ -175,6 +175,8 @@ class MainScreen(FloatLayout):
                 optional["angle"] = 0.01
             elif button_name == "down":
                 optional["speed"] = 0.1
+            elif button_name == "i":
+                optional["item_index"] = 0
 
             gc.send_key_message(SALT, 'unused', button_name, self.keystatus, optional)
             self.keycode = ""
