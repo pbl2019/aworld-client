@@ -60,12 +60,12 @@ class Terrain(Widget):
         for i in range(m.row):
             for j in range(m.col):
                 if m.map[i][j] == 0:
-                    self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, Window.height-m.msize*(m.row-i-1))))
+                    self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, m.msize*i)))
         self.canvas.add(Color(0, 0, 1, .3))
         for i in range(m.row):
             for j in range(m.col):
                 if m.map[i][j] == 1:
-                    self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, Window.height-m.msize*(m.row-i-1))))
+                    self.canvas.add(Rectangle(size=(m.msize, m.msize), pos=(m.msize*j, m.msize*i)))
 
 class ObjectLayer(Widget):
 
