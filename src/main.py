@@ -93,7 +93,7 @@ class ObjectLayer(Widget):
             # キャラクターの線画
             self.canvas.add(Ellipse(size=(msize, msize), pos=(o["x"]*msize-msize/2, o["y"]*msize-msize/2)))
             # キャラクターアングルの線画
-            self.canvas.add(Color(1,0,0,1))
+            self.canvas.add(Color(0,0,0,1))
             ap = self.angle_pos(o, msize)
             self.canvas.add(Ellipse(size=(msize*0.2, msize*0.2), pos=(ap[0]-msize*0.1, ap[1]-msize*0.1)))
         if cid and cid in core.data.characters:
