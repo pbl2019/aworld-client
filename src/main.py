@@ -104,7 +104,7 @@ class ObjectLayer(Widget):
                 label.refresh()
                 self.canvas.add(Rectangle(size=label.texture.size, pos=(0, idx*msize*2), texture=label.texture))
             # render position
-            label = Label(text="{}, {}".format(core.data.characters[cid]["x"], core.data.characters[cid]["y"]), font_size=msize*2)
+            label = Label(text="{}, {}, {}".format(core.data.characters[cid]["x"], core.data.characters[cid]["y"], core.data.characters[cid]["attack_charge"]), font_size=msize*2)
             label.refresh()
             self.canvas.add(Rectangle(size=label.texture.size, pos=(0, WINDOWSIZE[1]-msize*2), texture=label.texture))
 
